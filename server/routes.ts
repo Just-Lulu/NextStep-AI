@@ -45,7 +45,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
   });
   
-  app.get("/api/me", async (req: Request, res: Response) => {
+  app.get("/api/user", async (req: Request, res: Response) => {
     try {
       const user = await getCurrentUser(req);
       

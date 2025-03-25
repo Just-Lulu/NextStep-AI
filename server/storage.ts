@@ -199,7 +199,11 @@ export class MemStorage implements IStorage {
   
   async createAssessment(insertAssessment: InsertAssessment): Promise<Assessment> {
     const id = this.currentAssessmentId++;
-    const assessment: Assessment = { ...insertAssessment, id };
+    const assessment: Assessment = { 
+      ...insertAssessment, 
+      id,
+      description: insertAssessment.description || null
+    };
     this.assessments.set(id, assessment);
     return assessment;
   }
@@ -222,7 +226,14 @@ export class MemStorage implements IStorage {
   
   async createCareerMatch(insertCareerMatch: InsertCareerMatch): Promise<CareerMatch> {
     const id = this.currentCareerMatchId++;
-    const careerMatch: CareerMatch = { ...insertCareerMatch, id };
+    const careerMatch: CareerMatch = { 
+      ...insertCareerMatch, 
+      id,
+      description: insertCareerMatch.description || null,
+      salarRange: insertCareerMatch.salarRange || null,
+      requiredSkills: Array.isArray(insertCareerMatch.requiredSkills) ? insertCareerMatch.requiredSkills : null,
+      demandStatus: insertCareerMatch.demandStatus || null
+    };
     this.careerMatches.set(id, careerMatch);
     return careerMatch;
   }
