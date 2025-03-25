@@ -9,6 +9,57 @@ import "./types"; // Import to extend Express types
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // API routes
+
+  // Authentication routes
+  app.post("/api/login", async (req: Request, res: Response) => {
+    try {
+      const credentials = loginSchema.parse(req.body);
+      const user = await authenticateUser(credentials.username, credentials.password);
+      
+      if (!user) {
+        return res.status(401).json({ message: "Invalid username or password" });
+      }
+      
+      // Set user ID in session
+      req.session.userId = user.id;
+      
+      // Return user without the password
+      const { password, ...userWithoutPassword } = user;
+      res.json(userWithoutPassword);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ message: error.errors });
+      } else {
+        res.status(500).json({ message: "Login failed" });
+      }
+    }
+  });
+  
+  app.post("/api/logout", (req: Request, res: Response) => {
+    req.session.destroy((err) => {
+      if (err) {
+        return res.status(500).json({ message: "Failed to logout" });
+      }
+      
+      res.json({ message: "Logged out successfully" });
+    });
+  });
+  
+  app.get("/api/me", async (req: Request, res: Response) => {
+    try {
+      const user = await getCurrentUser(req);
+      
+      if (!user) {
+        return res.status(401).json({ message: "Not authenticated" });
+      }
+      
+      // Return user without the password
+      const { password, ...userWithoutPassword } = user;
+      res.json(userWithoutPassword);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch current user" });
+    }
+  });
   
   // User routes
   app.post("/api/users", async (req: Request, res: Response) => {

@@ -86,6 +86,24 @@ export class MemStorage implements IStorage {
   }
 
   private initializeData() {
+    // Sample test user
+    this.createUser({
+      username: "student",
+      password: "password123",
+      fullName: "Olivia Davis",
+      email: "olivia.davis@example.com",
+      department: "Computer Science",
+      level: "300",
+      skills: ["Python", "JavaScript", "Data Analysis"],
+      interests: ["Artificial Intelligence", "Data Science", "Web Development"],
+      academicBackground: {
+        courses: ["Introduction to Programming", "Data Structures and Algorithms", "Database Systems"],
+        projects: ["Student Management System", "Weather Prediction App"],
+        achievements: ["Dean's List 2023", "Hackathon Winner 2022"]
+      },
+      profileComplete: true
+    });
+    
     // Sample market trends for different careers
     const careers = ["Data Science", "UX Design", "Product Management"];
     const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
@@ -148,7 +166,17 @@ export class MemStorage implements IStorage {
 
   async createUser(insertUser: InsertUser): Promise<User> {
     const id = this.currentUserId++;
-    const user: User = { ...insertUser, id };
+    // Ensure all optional fields are properly typed
+    const user: User = { 
+      ...insertUser, 
+      id,
+      department: insertUser.department || null,
+      level: insertUser.level || null,
+      skills: Array.isArray(insertUser.skills) ? insertUser.skills : null,
+      interests: Array.isArray(insertUser.interests) ? insertUser.interests : null,
+      academicBackground: insertUser.academicBackground || null,
+      profileComplete: insertUser.profileComplete ?? false
+    };
     this.users.set(id, user);
     return user;
   }

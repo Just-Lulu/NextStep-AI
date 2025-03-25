@@ -1,20 +1,8 @@
-import { Request } from 'express';
-import { Session } from 'express-session';
+import { Session, SessionData } from 'express-session';
 
 // Extend Express session
 declare module 'express-session' {
-  interface Session {
+  interface SessionData {
     userId?: number;
-  }
-}
-
-// Extend Express request
-declare global {
-  namespace Express {
-    interface Request {
-      session: Session & {
-        userId?: number;
-      };
-    }
   }
 }
