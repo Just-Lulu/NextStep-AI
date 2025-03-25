@@ -1,53 +1,35 @@
 import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
 import { useAuth } from "@/hooks/use-auth";
-
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@/components/ui/tabs";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Loader2 } from "lucide-react";
 
-// Form validation schemas
+// Validation schemas
 const loginSchema = z.object({
-  username: z.string().min(1, "Username is required"),
-  password: z.string().min(1, "Password is required"),
+  username: z.string().min(3, "Username must be at least 3 characters"),
+  password: z.string().min(6, "Password must be at least 6 characters"),
 });
 
 const registerSchema = z.object({
-  fullName: z.string().min(1, "Full name is required"),
-  email: z.string().email("Invalid email address"),
-  username: z.string().min(1, "Username is required"),
+  username: z.string().min(3, "Username must be at least 3 characters"),
   password: z.string().min(6, "Password must be at least 6 characters"),
+  fullName: z.string().min(2, "Full name must be at least 2 characters"),
+  email: z.string().email("Please enter a valid email address"),
   department: z.string().optional(),
   level: z.string().optional(),
 });
 
 export default function AuthPage() {
   const [activeTab, setActiveTab] = useState("login");
-  const [location, navigate] = useLocation();
-  const { user, loginMutation, registerMutation } = useAuth();
+  const [, navigate] = useLocation();
+  const { user, isLoading, loginMutation, registerMutation } = useAuth();
 
   // Redirect if already logged in
   useEffect(() => {
@@ -56,6 +38,7 @@ export default function AuthPage() {
     }
   }, [user, navigate]);
 
+  // Login form
   const loginForm = useForm({
     resolver: zodResolver(loginSchema),
     defaultValues: {
@@ -64,18 +47,20 @@ export default function AuthPage() {
     },
   });
 
+  // Register form
   const registerForm = useForm({
     resolver: zodResolver(registerSchema),
     defaultValues: {
-      fullName: "",
-      email: "",
       username: "",
       password: "",
+      fullName: "",
+      email: "",
       department: "",
       level: "",
     },
   });
 
+  // Form submission handlers
   const onLoginSubmit = (values) => {
     loginMutation.mutate(values);
   };
@@ -84,37 +69,37 @@ export default function AuthPage() {
     registerMutation.mutate(values);
   };
 
+  // If loading auth state, show spinner
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center min-h-screen">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    );
+  }
+
   return (
-    <div className="flex min-h-screen">
-      {/* Left Column - Forms */}
-      <div className="flex items-center justify-center w-full lg:w-1/2 p-4 lg:p-8">
+    <div className="min-h-screen flex flex-col md:flex-row">
+      {/* Left column - Auth forms */}
+      <div className="flex-1 flex items-center justify-center p-6 bg-background">
         <Card className="w-full max-w-md">
-          <CardHeader>
-            <CardTitle className="text-2xl font-bold text-center">
-              NextStep AI
-            </CardTitle>
-            <CardDescription className="text-center">
-              Your AI-powered career guidance platform
+          <CardHeader className="space-y-1">
+            <CardTitle className="text-2xl font-bold">NextStep AI</CardTitle>
+            <CardDescription>
+              Sign in to access personalized career guidance
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Tabs
-              defaultValue="login"
-              value={activeTab}
-              onValueChange={setActiveTab}
-              className="w-full"
-            >
-              <TabsList className="grid w-full grid-cols-2 mb-4">
+            <Tabs value={activeTab} onValueChange={setActiveTab}>
+              <TabsList className="grid w-full grid-cols-2">
                 <TabsTrigger value="login">Login</TabsTrigger>
                 <TabsTrigger value="register">Register</TabsTrigger>
               </TabsList>
-              
-              <TabsContent value="login">
+
+              {/* Login Form */}
+              <TabsContent value="login" className="pt-4">
                 <Form {...loginForm}>
-                  <form
-                    onSubmit={loginForm.handleSubmit(onLoginSubmit)}
-                    className="space-y-4"
-                  >
+                  <form onSubmit={loginForm.handleSubmit(onLoginSubmit)} className="space-y-4">
                     <FormField
                       control={loginForm.control}
                       name="username"
@@ -122,7 +107,7 @@ export default function AuthPage() {
                         <FormItem>
                           <FormLabel>Username</FormLabel>
                           <FormControl>
-                            <Input placeholder="username" {...field} />
+                            <Input {...field} placeholder="johndoe" />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -135,33 +120,62 @@ export default function AuthPage() {
                         <FormItem>
                           <FormLabel>Password</FormLabel>
                           <FormControl>
-                            <Input
-                              type="password"
-                              placeholder="••••••••"
-                              {...field}
-                            />
+                            <Input type="password" {...field} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
                       )}
                     />
-                    <Button
-                      type="submit"
-                      className="w-full"
+                    <Button 
+                      type="submit" 
+                      className="w-full" 
                       disabled={loginMutation.isPending}
                     >
-                      {loginMutation.isPending ? "Logging in..." : "Login"}
+                      {loginMutation.isPending ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Logging in...
+                        </>
+                      ) : (
+                        "Login"
+                      )}
                     </Button>
                   </form>
                 </Form>
               </TabsContent>
-              
-              <TabsContent value="register">
+
+              {/* Register Form */}
+              <TabsContent value="register" className="pt-4">
                 <Form {...registerForm}>
-                  <form
-                    onSubmit={registerForm.handleSubmit(onRegisterSubmit)}
-                    className="space-y-4"
-                  >
+                  <form onSubmit={registerForm.handleSubmit(onRegisterSubmit)} className="space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <FormField
+                        control={registerForm.control}
+                        name="username"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Username</FormLabel>
+                            <FormControl>
+                              <Input {...field} placeholder="johndoe" />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={registerForm.control}
+                        name="password"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Password</FormLabel>
+                            <FormControl>
+                              <Input type="password" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
                     <FormField
                       control={registerForm.control}
                       name="fullName"
@@ -169,7 +183,7 @@ export default function AuthPage() {
                         <FormItem>
                           <FormLabel>Full Name</FormLabel>
                           <FormControl>
-                            <Input placeholder="John Doe" {...field} />
+                            <Input {...field} placeholder="John Doe" />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -182,41 +196,7 @@ export default function AuthPage() {
                         <FormItem>
                           <FormLabel>Email</FormLabel>
                           <FormControl>
-                            <Input
-                              type="email"
-                              placeholder="john.doe@adeleke.edu.ng"
-                              {...field}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={registerForm.control}
-                      name="username"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Username</FormLabel>
-                          <FormControl>
-                            <Input placeholder="johndoe" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={registerForm.control}
-                      name="password"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Password</FormLabel>
-                          <FormControl>
-                            <Input
-                              type="password"
-                              placeholder="••••••••"
-                              {...field}
-                            />
+                            <Input {...field} placeholder="john.doe@adeleke.edu.ng" type="email" />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -230,7 +210,7 @@ export default function AuthPage() {
                           <FormItem>
                             <FormLabel>Department</FormLabel>
                             <FormControl>
-                              <Input placeholder="Computer Science" {...field} />
+                              <Input {...field} placeholder="Computer Science" />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -243,71 +223,136 @@ export default function AuthPage() {
                           <FormItem>
                             <FormLabel>Level</FormLabel>
                             <FormControl>
-                              <Input placeholder="300" {...field} />
+                              <Input {...field} placeholder="400" />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
                         )}
                       />
                     </div>
-                    <Button
-                      type="submit"
-                      className="w-full"
+                    <Button 
+                      type="submit" 
+                      className="w-full" 
                       disabled={registerMutation.isPending}
                     >
-                      {registerMutation.isPending
-                        ? "Creating account..."
-                        : "Create Account"}
+                      {registerMutation.isPending ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Creating account...
+                        </>
+                      ) : (
+                        "Create Account"
+                      )}
                     </Button>
                   </form>
                 </Form>
               </TabsContent>
             </Tabs>
           </CardContent>
+          <CardFooter>
+            <p className="text-sm text-muted-foreground text-center w-full">
+              {activeTab === "login" ? (
+                <>
+                  Don't have an account?{" "}
+                  <button
+                    type="button"
+                    className="text-primary underline"
+                    onClick={() => setActiveTab("register")}
+                  >
+                    Sign up
+                  </button>
+                </>
+              ) : (
+                <>
+                  Already have an account?{" "}
+                  <button
+                    type="button"
+                    className="text-primary underline"
+                    onClick={() => setActiveTab("login")}
+                  >
+                    Log in
+                  </button>
+                </>
+              )}
+            </p>
+          </CardFooter>
         </Card>
       </div>
-      
-      {/* Right Column - Hero Section */}
-      <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-indigo-800 to-indigo-900 text-white p-8 items-center justify-center">
-        <div className="max-w-lg space-y-8">
-          <h1 className="text-4xl font-bold mb-4">
-            Discover Your Ideal Career Path with AI
+
+      {/* Right column - Hero/Info section */}
+      <div className="flex-1 p-6 hidden md:flex flex-col justify-center bg-gradient-to-b from-indigo-500 to-indigo-700 text-white">
+        <div className="max-w-md mx-auto">
+          <h1 className="text-3xl font-bold mb-4">
+            Welcome to NextStep AI
           </h1>
           <p className="text-lg mb-6">
-            NextStep AI uses advanced algorithms to analyze your skills, interests, and academic background to provide personalized career recommendations and skill development opportunities.
+            Your AI-powered career guidance platform for Adeleke University students.
           </p>
           <div className="space-y-4">
-            <div className="flex items-start space-x-3">
-              <div className="bg-white/10 p-2 rounded-full">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            <div className="flex items-start gap-3">
+              <div className="bg-white/20 p-1 rounded-full">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-5 w-5"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                    clipRule="evenodd"
+                  />
                 </svg>
               </div>
               <div>
                 <h3 className="font-medium">Personalized Career Matching</h3>
-                <p className="text-white/70">Find careers that align with your unique skills and aspirations</p>
+                <p className="text-white/80 text-sm">
+                  Get tailored career recommendations based on your skills, interests, and academic performance.
+                </p>
               </div>
             </div>
-            <div className="flex items-start space-x-3">
-              <div className="bg-white/10 p-2 rounded-full">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+            <div className="flex items-start gap-3">
+              <div className="bg-white/20 p-1 rounded-full">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-5 w-5"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                    clipRule="evenodd"
+                  />
                 </svg>
               </div>
               <div>
                 <h3 className="font-medium">Skill Gap Analysis</h3>
-                <p className="text-white/70">Identify and bridge skills needed for your dream career</p>
+                <p className="text-white/80 text-sm">
+                  Identify and bridge the gap between your current skills and those required for your desired career.
+                </p>
               </div>
             </div>
-            <div className="flex items-start space-x-3">
-              <div className="bg-white/10 p-2 rounded-full">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+            <div className="flex items-start gap-3">
+              <div className="bg-white/20 p-1 rounded-full">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-5 w-5"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                    clipRule="evenodd"
+                  />
                 </svg>
               </div>
               <div>
                 <h3 className="font-medium">Job Market Insights</h3>
-                <p className="text-white/70">Stay informed about industry trends and opportunities</p>
+                <p className="text-white/80 text-sm">
+                  Access real-time data on job market trends, salary ranges, and demand for different career paths.
+                </p>
               </div>
             </div>
           </div>

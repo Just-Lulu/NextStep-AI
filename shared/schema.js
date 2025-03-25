@@ -1,72 +1,130 @@
-const { z } = require("zod");
+import { pgTable, serial, text, integer, timestamp, boolean } from 'drizzle-orm/pg-core';
+import { createInsertSchema } from 'drizzle-zod';
+import { z } from 'zod';
 
-// User schema
-const insertUserSchema = z.object({
-  username: z.string().min(1, "Username is required"),
-  password: z.string().min(1, "Password is required"),
-  fullName: z.string().min(1, "Full name is required"),
-  email: z.string().email("Invalid email address"),
-  department: z.string().nullable().optional(),
-  level: z.string().nullable().optional(),
-  skills: z.array(z.string()).nullable().optional(),
-  interests: z.array(z.string()).nullable().optional(),
+// Users table
+export const users = pgTable('users', {
+  id: serial('id').primaryKey(),
+  username: text('username').notNull().unique(),
+  password: text('password').notNull(),
+  fullName: text('full_name').notNull(),
+  email: text('email').notNull(),
+  department: text('department'),
+  level: text('level'),
+  skills: text('skills').array(),
+  interests: text('interests').array(),
   academicBackground: z.object({
     courses: z.array(z.string()),
     projects: z.array(z.string()),
     achievements: z.array(z.string()),
-  }).nullable().optional(),
+  }).optional(),
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow(),
 });
 
-// Assessment schema
-const insertAssessmentSchema = z.object({
-  userId: z.number(),
-  type: z.string(),
-  results: z.record(z.any()),
+// Assessments table
+export const assessments = pgTable('assessments', {
+  id: serial('id').primaryKey(),
+  userId: integer('user_id').notNull().references(() => users.id),
+  type: text('type').notNull(), // technical, soft, career
+  completed: boolean('completed').notNull().default(false),
+  results: text('results'), // JSON stringified assessment results
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow(),
 });
 
-// Career Match schema
-const insertCareerMatchSchema = z.object({
-  userId: z.number(),
-  title: z.string(),
-  matchPercentage: z.number(),
-  description: z.string(),
-  requiredSkills: z.array(z.string()),
-  salaryRange: z.string(),
-  demandStatus: z.string(),
+// Career Matches table
+export const careerMatches = pgTable('career_matches', {
+  id: serial('id').primaryKey(),
+  userId: integer('user_id').notNull().references(() => users.id),
+  title: text('title').notNull(),
+  matchPercentage: integer('match_percentage').notNull(),
+  description: text('description').notNull(),
+  requiredSkills: text('required_skills').array(),
+  salaryRange: text('salary_range').notNull(),
+  demandStatus: text('demand_status').notNull(), // High demand, Growing, Stable, Declining
+  createdAt: timestamp('created_at').defaultNow(),
 });
 
-// Skill Gap schema
-const insertSkillGapSchema = z.object({
-  userId: z.number(),
-  skill: z.string(),
-  currentLevel: z.number(),
-  targetCareer: z.string().nullable().optional(),
+// Skill Gaps table
+export const skillGaps = pgTable('skill_gaps', {
+  id: serial('id').primaryKey(),
+  userId: integer('user_id').notNull().references(() => users.id),
+  skill: text('skill').notNull(),
+  currentLevel: integer('current_level').notNull(),
+  targetCareer: text('target_career'),
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow(),
 });
 
-// Resource schema
-const insertResourceSchema = z.object({
-  type: z.string(),
-  title: z.string(),
-  link: z.string().nullable().optional(),
-  description: z.string().nullable().optional(),
-  skillId: z.number().nullable().optional(),
+// Resources table
+export const resources = pgTable('resources', {
+  id: serial('id').primaryKey(),
+  type: text('type').notNull(), // Course, Video, Tutorial, Book, Website
+  title: text('title').notNull(),
+  link: text('link'),
+  description: text('description'),
+  skillId: integer('skill_id'),
+  createdAt: timestamp('created_at').defaultNow(),
 });
 
-// Market Trend schema
-const insertMarketTrendSchema = z.object({
-  careerTitle: z.string(),
-  month: z.string(),
-  jobOpenings: z.number(),
-  averageSalary: z.number(),
-  topSkillsInDemand: z.array(z.string()),
-  growthRate: z.number(),
+// Market Trends table
+export const marketTrends = pgTable('market_trends', {
+  id: serial('id').primaryKey(),
+  careerTitle: text('career_title').notNull(),
+  month: text('month').notNull(),
+  year: integer('year').notNull(),
+  demandScore: integer('demand_score').notNull(),
+  salaryAverage: integer('salary_average').notNull(),
+  openPositions: integer('open_positions').notNull(),
+  createdAt: timestamp('created_at').defaultNow(),
 });
 
-module.exports = {
-  insertUserSchema,
-  insertAssessmentSchema,
-  insertCareerMatchSchema,
-  insertSkillGapSchema,
-  insertResourceSchema,
-  insertMarketTrendSchema
-};
+// Schemas for inserting data (omitting auto-generated fields)
+export const insertUserSchema = createInsertSchema(users).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertAssessmentSchema = createInsertSchema(assessments).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertCareerMatchSchema = createInsertSchema(careerMatches).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertSkillGapSchema = createInsertSchema(skillGaps).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertResourceSchema = createInsertSchema(resources).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertMarketTrendSchema = createInsertSchema(marketTrends).omit({
+  id: true,
+  createdAt: true,
+});
+
+// Types
+export const InsertUser = z.infer(insertUserSchema);
+export const InsertAssessment = z.infer(insertAssessmentSchema);
+export const InsertCareerMatch = z.infer(insertCareerMatchSchema);
+export const InsertSkillGap = z.infer(insertSkillGapSchema);
+export const InsertResource = z.infer(insertResourceSchema);
+export const InsertMarketTrend = z.infer(insertMarketTrendSchema);
+
+export const User = users;
+export const Assessment = assessments;
+export const CareerMatch = careerMatches;
+export const SkillGap = skillGaps;
+export const Resource = resources;
+export const MarketTrend = marketTrends;

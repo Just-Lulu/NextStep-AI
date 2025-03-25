@@ -1,85 +1,139 @@
-import { useEffect, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/use-auth";
+import { useQuery } from "@tanstack/react-query";
 import DashboardLayout from "@/layouts/DashboardLayout";
 import WelcomeSection from "@/components/dashboard/WelcomeSection";
-import NextStepsSection from "@/components/dashboard/NextStepsSection";
 import CareerMatchSection from "@/components/dashboard/CareerMatchSection";
 import SkillGapAnalysis from "@/components/dashboard/SkillGapAnalysis";
-import UpcomingAssessments from "@/components/dashboard/UpcomingAssessments";
 import MarketTrendsVisualization from "@/components/dashboard/MarketTrendsVisualization";
+import NextStepsSection from "@/components/dashboard/NextStepsSection";
+import UpcomingAssessments from "@/components/dashboard/UpcomingAssessments";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
+import { RoadMapIcon, SurveyIcon, ProfileIcon } from "@/components/ui/icons";
 
 export default function Dashboard() {
   const { user } = useAuth();
-  const [targetCareer, setTargetCareer] = useState(null);
   
-  const { data: careerMatches, isLoading: isLoadingCareerMatches } = useQuery({
-    queryKey: ["/api/users", user?.id, "career-matches"],
-    enabled: !!user?.id,
+  // Fetch market trends data
+  const { data: marketTrends, isLoading: isLoadingTrends } = useQuery({
+    queryKey: ["/api/market-trends"],
+    enabled: true,
   });
   
-  // Set the top career match as the default target career
-  useEffect(() => {
-    if (careerMatches && careerMatches.length > 0) {
-      setTargetCareer(careerMatches[0].title);
-    }
-  }, [careerMatches]);
-  
-  // Define next steps for the user
+  // Next steps suggestions for the user
   const nextSteps = [
     {
       id: 1,
-      icon: "survey",
-      title: "Complete Your Skills Assessment",
-      description: "Take a quick assessment to help us understand your skills better",
-      actionText: "Start Assessment",
-      actionLink: "/assessments",
-      actionVariant: "primary",
+      icon: 'survey',
+      title: 'Complete Your Assessment',
+      description: 'Take a comprehensive skill assessment to get personalized career recommendations.',
+      actionText: 'Start Assessment',
+      actionLink: '/assessments',
+      actionVariant: 'primary',
     },
     {
       id: 2,
-      icon: "profile",
-      title: "Update Your Profile",
-      description: "Add more details to your academic background and interests",
-      actionText: "Edit Profile",
-      actionLink: "/profile",
-      actionVariant: "outline",
+      icon: 'profile',
+      title: 'Update Your Profile',
+      description: 'Add more details about your academic background and interests.',
+      actionText: 'Edit Profile',
+      actionLink: '/profile',
+      actionVariant: 'outline',
     },
     {
       id: 3,
-      icon: "book",
-      title: "Explore Learning Resources",
-      description: "Find courses and materials to develop your skills",
-      actionText: "View Resources",
-      actionLink: "/skill-development",
-      actionVariant: "secondary",
+      icon: 'book',
+      title: 'Explore Learning Resources',
+      description: 'Discover resources to develop skills needed for your desired career path.',
+      actionText: 'View Resources',
+      actionLink: '/skill-development',
+      actionVariant: 'secondary',
     },
   ];
   
   return (
     <DashboardLayout title="Dashboard" userName={user?.fullName}>
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left Column */}
-        <div className="lg:col-span-2 space-y-6">
-          <WelcomeSection userName={user?.fullName || "there"} />
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <NextStepsSection nextSteps={nextSteps} />
-            <UpcomingAssessments userId={user?.id} />
+      <div className="space-y-6">
+        {/* Welcome Section */}
+        <WelcomeSection userName={user?.fullName || 'there'} />
+        
+        {/* Main Dashboard Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {/* Career Matches Section */}
+          <div className="lg:col-span-2">
+            <CareerMatchSection userId={user?.id} />
           </div>
           
-          <CareerMatchSection userId={user?.id} />
+          {/* Assessment Reminder */}
+          <div>
+            <Card className="h-full">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-lg flex items-center">
+                  <SurveyIcon className="mr-2" />
+                  Upcoming Assessments
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {user ? (
+                  <UpcomingAssessments userId={user.id} />
+                ) : (
+                  <div className="space-y-2">
+                    <Skeleton className="h-20 w-full" />
+                    <Skeleton className="h-20 w-full" />
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
           
-          <div className="bg-white rounded-lg shadow-sm p-6 border">
-            <h2 className="text-xl font-semibold mb-6">Job Market Trends</h2>
-            <MarketTrendsVisualization targetCareer={targetCareer} />
+          {/* Skill Gap Analysis */}
+          <div className="lg:col-span-2">
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-lg flex items-center">
+                  <RoadMapIcon className="mr-2" />
+                  Skill Gap Analysis
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {user ? (
+                  <SkillGapAnalysis userId={user.id} />
+                ) : (
+                  <div className="space-y-3">
+                    <Skeleton className="h-4 w-full" />
+                    <Skeleton className="h-28 w-full" />
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+          
+          {/* Market Trends */}
+          <div>
+            <Card className="h-full">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-lg flex items-center">
+                  <ProfileIcon className="mr-2" />
+                  Market Trends
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {isLoadingTrends ? (
+                  <div className="space-y-3">
+                    <Skeleton className="h-28 w-full" />
+                    <Skeleton className="h-4 w-3/4" />
+                    <Skeleton className="h-4 w-1/2" />
+                  </div>
+                ) : (
+                  <MarketTrendsVisualization data={marketTrends || []} />
+                )}
+              </CardContent>
+            </Card>
           </div>
         </div>
         
-        {/* Right Column */}
-        <div className="space-y-6">
-          <SkillGapAnalysis userId={user?.id} targetCareer={targetCareer} />
-        </div>
+        {/* Next Steps */}
+        <NextStepsSection nextSteps={nextSteps} />
       </div>
     </DashboardLayout>
   );
