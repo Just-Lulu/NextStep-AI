@@ -1,15 +1,16 @@
 import { createContext, useContext } from "react";
-import {
-  useQuery,
-  useMutation,
-} from "@tanstack/react-query";
-import { getQueryFn, apiRequest, queryClient } from "../lib/queryClient";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { getQueryFn, apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 
+// Context for authentication state
 export const AuthContext = createContext(null);
 
+// Provider component that wraps the app
 export function AuthProvider({ children }) {
   const { toast } = useToast();
+  
+  // Query for the current user
   const {
     data: user,
     error,
@@ -19,6 +20,7 @@ export function AuthProvider({ children }) {
     queryFn: getQueryFn({ on401: "returnNull" }),
   });
 
+  // Login mutation
   const loginMutation = useMutation({
     mutationFn: async (credentials) => {
       const res = await apiRequest("POST", "/api/login", credentials);
@@ -26,56 +28,41 @@ export function AuthProvider({ children }) {
     },
     onSuccess: (user) => {
       queryClient.setQueryData(["/api/user"], user);
-      toast({
-        title: "Login successful",
-        description: `Welcome, ${user.fullName}!`,
-      });
     },
     onError: (error) => {
       toast({
         title: "Login failed",
-        description: error.message || "Invalid username or password",
+        description: error.message,
         variant: "destructive",
       });
     },
   });
 
+  // Register mutation
   const registerMutation = useMutation({
     mutationFn: async (userData) => {
-      const res = await apiRequest("POST", "/api/users", userData);
+      const res = await apiRequest("POST", "/api/register", userData);
       return await res.json();
     },
     onSuccess: async (user) => {
-      // After registration, automatically log in
-      await loginMutation.mutateAsync({
-        username: user.username,
-        password: user.password, // This is a hack, we don't actually get the password back
-      });
-      
-      toast({
-        title: "Registration successful",
-        description: "Your account has been created",
-      });
+      queryClient.setQueryData(["/api/user"], user);
     },
     onError: (error) => {
       toast({
         title: "Registration failed",
-        description: error.message || "Could not create account",
+        description: error.message,
         variant: "destructive",
       });
     },
   });
 
+  // Logout mutation
   const logoutMutation = useMutation({
     mutationFn: async () => {
       await apiRequest("POST", "/api/logout");
     },
     onSuccess: () => {
       queryClient.setQueryData(["/api/user"], null);
-      toast({
-        title: "Logged out",
-        description: "You have been successfully logged out",
-      });
     },
     onError: (error) => {
       toast({
@@ -86,6 +73,7 @@ export function AuthProvider({ children }) {
     },
   });
 
+  // Provide auth context to children
   return (
     <AuthContext.Provider
       value={{
@@ -102,6 +90,7 @@ export function AuthProvider({ children }) {
   );
 }
 
+// Hook for accessing the auth context
 export function useAuth() {
   const context = useContext(AuthContext);
   if (!context) {

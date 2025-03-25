@@ -1,27 +1,30 @@
 import { Switch, Route } from "wouter";
-import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
-import { Toaster } from "@/components/ui/toaster";
+import { queryClient } from "@/lib/queryClient";
 import { AuthProvider } from "@/hooks/use-auth";
-import { ProtectedRoute } from "./lib/protected-route";
+import { Toaster } from "@/components/ui/toaster";
 
+// Pages
 import Dashboard from "@/pages/Dashboard";
+import AuthPage from "@/pages/auth-page";
 import Profile from "@/pages/Profile";
 import Assessments from "@/pages/Assessments";
 import CareerPaths from "@/pages/CareerPaths";
 import SkillDevelopment from "@/pages/SkillDevelopment";
-import AuthPage from "@/pages/auth-page";
 import NotFound from "@/pages/not-found";
+
+// Components
+import { ProtectedRoute } from "@/lib/protected-route";
 
 function Router() {
   return (
     <Switch>
-      <ProtectedRoute path="/" component={Dashboard} />
-      <ProtectedRoute path="/profile" component={Profile} />
-      <ProtectedRoute path="/assessments" component={Assessments} />
-      <ProtectedRoute path="/career-paths" component={CareerPaths} />
-      <ProtectedRoute path="/skill-development" component={SkillDevelopment} />
       <Route path="/auth" component={AuthPage} />
+      <Route path="/" component={() => <ProtectedRoute component={Dashboard} />} />
+      <Route path="/profile" component={() => <ProtectedRoute component={Profile} />} />
+      <Route path="/assessments" component={() => <ProtectedRoute component={Assessments} />} />
+      <Route path="/career-paths" component={() => <ProtectedRoute component={CareerPaths} />} />
+      <Route path="/skill-development" component={() => <ProtectedRoute component={SkillDevelopment} />} />
       <Route component={NotFound} />
     </Switch>
   );
