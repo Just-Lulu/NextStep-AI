@@ -4,6 +4,8 @@ import { storage } from "./storage";
 import { generateCareerRecommendations, analyzeSkillGap } from "./openai";
 import { insertUserSchema, insertAssessmentSchema } from "@shared/schema";
 import { z } from "zod";
+import { requireAuth, authenticateUser, loginSchema, getCurrentUser } from "./auth";
+import "./types"; // Import to extend Express types
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // API routes
