@@ -18,12 +18,14 @@ const MobileHeader: React.FC = () => {
       <div className="flex items-center justify-between h-16 px-4">
         <Sheet open={open} onOpenChange={setOpen}>
           <SheetTrigger asChild>
-            <button className="p-1 rounded-md hover:bg-gray-100">
-              <MenuIcon size="xl" className="text-gray-600" />
+            <button className="p-2 rounded-md hover:bg-gray-100 flex items-center justify-center transition-colors">
+              <MenuIcon size="xl" className="text-primary w-6 h-6" />
             </button>
           </SheetTrigger>
-          <SheetContent side="left" className="p-0">
-            <Sidebar />
+          <SheetContent side="left" className="w-[280px] p-0 border-r">
+            <div className="flex flex-col h-full">
+              <Sidebar />
+            </div>
           </SheetContent>
         </Sheet>
         
