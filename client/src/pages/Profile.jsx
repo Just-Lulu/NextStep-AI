@@ -111,8 +111,7 @@ export default function Profile() {
                   
                   <div>
                     <h3 className="text-sm font-medium mb-2">Projects</h3>
-                    {user && user.academicBackground && user.academicBackground.projects && 
-                     user.academicBackground.projects.length > 0 ? (
+                    {user?.academicBackground?.projects?.length > 0 ? (
                       <ul className="text-sm list-disc list-inside space-y-1">
                         {user.academicBackground.projects.map((project, index) => (
                           <li key={index}>{project}</li>
