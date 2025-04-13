@@ -1,19 +1,29 @@
 import express, { type Request, Response, NextFunction } from "express";
 import session from "express-session";
+import createMemoryStore from "memorystore";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
+
+// Create a MemoryStore constructor
+const MemoryStore = createMemoryStore(session);
+
+// Create the memory store instance
+const memoryStore = new MemoryStore({
+  checkPeriod: 86400000 // prune expired entries every 24h
+});
 
 const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
-// Configure session middleware
+// Configure session middleware with memory store
 app.use(session({
-  secret: "nextstepcareerguidance", // In production, use environment variables for this
+  secret: process.env.SESSION_SECRET || "nextstepcareerguidance", 
   resave: false,
   saveUninitialized: false,
+  store: memoryStore,
   cookie: {
-    secure: process.env.NODE_ENV === "production", // Use secure cookies in production
+    secure: process.env.NODE_ENV === "production",
     maxAge: 24 * 60 * 60 * 1000, // 1 day
   }
 }));
