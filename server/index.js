@@ -1,15 +1,10 @@
 require('dotenv').config();
 const express = require('express');
 const session = require('express-session');
-const RedisStore = require('connect-redis').default;
-const { createClient } = require('redis');
+const MemoryStore = require('memorystore')(session);
 const { z } = require('zod');
 const { log, setupVite, serveStatic } = require('./vite');
 const { registerRoutes } = require('./routes');
-
-// Initialize Redis client
-const redisClient = createClient();
-redisClient.connect().catch(console.error);
 
 // Check for required environment variables
 if (!process.env.SESSION_SECRET) {
@@ -17,10 +12,9 @@ if (!process.env.SESSION_SECRET) {
   log('SESSION_SECRET not set, using a default value for local development');
 }
 
-// Initialize Redis store
-const redisStore = new RedisStore({
-  client: redisClient,
-  prefix: 'nextstep:'
+// Create memory store for sessions
+const memoryStore = new MemoryStore({
+  checkPeriod: 86400000 // prune expired entries every 24h
 });
 
 // Check for OpenAI API Key
@@ -41,7 +35,7 @@ async function start() {
       secret: process.env.SESSION_SECRET,
       resave: false,
       saveUninitialized: false,
-      store: redisStore, // Added Redis store
+      store: memoryStore, // Using memory store
       cookie: {
         secure: process.env.NODE_ENV === 'production',
         httpOnly: true,
