@@ -13,20 +13,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Authentication routes
   app.post("/api/login", async (req: Request, res: Response) => {
     try {
+      console.log("Login attempt with:", JSON.stringify(req.body));
       const credentials = loginSchema.parse(req.body);
       const user = await authenticateUser(credentials.username, credentials.password);
       
       if (!user) {
+        console.log("Authentication failed for user:", credentials.username);
         return res.status(401).json({ message: "Invalid username or password" });
       }
       
-      // Set user ID in session
+      // Set user ID in session and save it
       req.session.userId = user.id;
       
-      // Return user without the password
-      const { password, ...userWithoutPassword } = user;
-      res.json(userWithoutPassword);
+      // Log session data
+      console.log("Setting session userId to:", user.id);
+      console.log("Session object:", req.session);
+      
+      // Save session explicitly to ensure it's stored
+      req.session.save((err) => {
+        if (err) {
+          console.error("Session save error:", err);
+          return res.status(500).json({ message: "Failed to save session" });
+        }
+        
+        // Return user without the password
+        const { password, ...userWithoutPassword } = user;
+        console.log("Login successful for user:", user.username);
+        res.json(userWithoutPassword);
+      });
     } catch (error) {
+      console.error("Login error:", error);
       if (error instanceof z.ZodError) {
         res.status(400).json({ message: error.errors });
       } else {
@@ -47,16 +63,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   app.get("/api/user", async (req: Request, res: Response) => {
     try {
+      console.log("GET /api/user called, session:", req.session);
+      console.log("Session ID:", req.sessionID);
+      console.log("User ID from session:", req.session.userId);
+      
       const user = await getCurrentUser(req);
       
       if (!user) {
+        console.log("No user found in session");
         return res.status(401).json({ message: "Not authenticated" });
       }
+      
+      console.log("Found user:", user.username);
       
       // Return user without the password
       const { password, ...userWithoutPassword } = user;
       res.json(userWithoutPassword);
     } catch (error) {
+      console.error("Error fetching current user:", error);
       res.status(500).json({ message: "Failed to fetch current user" });
     }
   });

@@ -1,10 +1,11 @@
 import express, { type Request, Response, NextFunction } from "express";
 import session from "express-session";
-import createMemoryStore from "memorystore";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
+import "./types"; // Import session type extensions
+import { default as createMemoryStore } from "memorystore";
 
-// Create a MemoryStore constructor
+// Create MemoryStore constructor
 const MemoryStore = createMemoryStore(session);
 
 // Create the memory store instance
@@ -19,14 +20,24 @@ app.use(express.urlencoded({ extended: false }));
 // Configure session middleware with memory store
 app.use(session({
   secret: process.env.SESSION_SECRET || "nextstepcareerguidance", 
-  resave: false,
-  saveUninitialized: false,
+  resave: true, // Changed to true to ensure session is saved on each request
+  saveUninitialized: true, // Changed to true to create session even without data
   store: memoryStore,
+  name: 'nextstep.sid', // Custom name to avoid conflicts
   cookie: {
-    secure: process.env.NODE_ENV === "production",
+    secure: false, // Set to false for development, even in production since we don't have HTTPS
     maxAge: 24 * 60 * 60 * 1000, // 1 day
+    httpOnly: true,
+    sameSite: 'lax'
   }
 }));
+
+// Log all session data for debugging
+app.use((req, res, next) => {
+  console.log(`Session ID: ${req.sessionID}`);
+  console.log(`Session data: ${JSON.stringify(req.session)}`);
+  next();
+});
 
 app.use((req, res, next) => {
   const start = Date.now();

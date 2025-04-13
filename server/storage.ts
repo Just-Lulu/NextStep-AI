@@ -104,6 +104,24 @@ export class MemStorage implements IStorage {
       profileComplete: true
     });
     
+    // Create demo user for testing
+    this.createUser({
+      username: "demo",
+      password: "password123",
+      fullName: "Demo User",
+      email: "demo@example.com",
+      department: "Computer Engineering",
+      level: "200",
+      skills: ["HTML", "CSS", "JavaScript"],
+      interests: ["Web Development", "Mobile Development", "UI/UX Design"],
+      academicBackground: {
+        courses: ["Web Development", "Computer Architecture", "Programming Fundamentals"],
+        projects: ["Personal Portfolio", "To-Do App"],
+        achievements: ["Best Project Award 2023"]
+      },
+      profileComplete: true
+    });
+    
     // Sample market trends for different careers
     const careers = ["Data Science", "UX Design", "Product Management"];
     const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
