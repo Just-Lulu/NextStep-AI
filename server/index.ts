@@ -4,7 +4,7 @@ import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import "./types"; // Import session type extensions
 import { default as createMemoryStore } from "memorystore";
-
+import punycode from "punycode"; // Use the npm package instead of the built-in module
 // Create MemoryStore constructor
 const MemoryStore = createMemoryStore(session);
 
