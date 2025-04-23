@@ -19,23 +19,41 @@ app.use(express.urlencoded({ extended: false }));
 
 // Configure session middleware with memory store
 app.use(session({
-  secret: process.env.SESSION_SECRET || "nextstepcareerguidance", 
-  resave: true, // Changed to true to ensure session is saved on each request
-  saveUninitialized: true, // Changed to true to create session even without data
+  secret: process.env.SESSION_SECRET || "nextstepcareerguidance",
+  resave: false, // Avoid unnecessary session saves
+  saveUninitialized: false, // Only save sessions when they are modified
   store: memoryStore,
-  name: 'nextstep.sid', // Custom name to avoid conflicts
+  name: 'nextstep.sid',
   cookie: {
-    secure: false, // Set to false for development, even in production since we don't have HTTPS
+    secure: false, // Set to true in production with HTTPS
     maxAge: 24 * 60 * 60 * 1000, // 1 day
     httpOnly: true,
-    sameSite: 'lax'
+    sameSite: 'lax',
   }
 }));
 
-// Log all session data for debugging
+// Middleware to log session events
 app.use((req, res, next) => {
-  console.log(`Session ID: ${req.sessionID}`);
-  console.log(`Session data: ${JSON.stringify(req.session)}`);
+  console.log(`[Session Debug] Session ID: ${req.sessionID}`);
+  console.log(`[Session Debug] Session Data: ${JSON.stringify(req.session)}`);
+  next();
+});
+
+// Log session creation
+app.use((req, res, next) => {
+  if (!req.session) {
+    console.log(`[Session Debug] New session created: ${req.sessionID}`);
+  }
+  next();
+});
+
+// Log session destruction
+app.use((req, res, next) => {
+  const originalDestroy = req.session.destroy;
+  req.session.destroy = function (callback) {
+    console.log(`[Session Debug] Session destroyed: ${req.sessionID}`);
+    return originalDestroy.call(req.session, callback);
+  };
   next();
 });
 
